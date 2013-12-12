@@ -63,9 +63,19 @@ class Project(models.Model):
         return self.name        
 
 
+class Contact(models.Model):
+    name = models.CharField(max_length=200)
+    email = models.EmailField(unique=True)
+    message = models.TextField(max_length=500)
 
-    
+    def __unicode__(self):
+        return self.email
 
-        
-        
-        
+
+class Faq(models.Model):
+    """FAQs"""
+    question = models.TextField(max_length=500)
+    answer = models.TextField(max_length=1000)
+
+    def __unicode__(self):
+        return self.question

@@ -2,9 +2,16 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from django.contrib.auth.models import User
+from django.contrib import messages
 
+# Models
 from ac.models import AakashCenter, Coordinator
 from ac.models import Project, Mentor, TeamMember
+from ac.models import Faq
+
+# Forms
+from ac.forms import ContactForm
+
 
 def index(request):
     """Index page.
@@ -21,14 +28,51 @@ def about(request):
     Arguments:
     - `Request`:
     """
-    return render_to_response('about.html')    
+    return render_to_response('about.html')
+
+
+def contact(request):
+    """Contact us page.
+
+    Arguments:
+    - `Request`:
+    """
+    context = RequestContext(request)
+
+    if request.POST:
+        contactform = ContactForm(data=request.POST)
+        if contactform.is_valid():
+            contactform = contactform.save(commit=True)
+            messages.success(request, "Thank you for your reply. We\
+            will get back to you soon.")
+        else:
+            print contactform.errors
+            messages.error(request, "One or more fields are required or not valid.")
+    else:
+        contactform = ContactForm()
+
+    context_dict = {'contactform': contactform}
+    return render_to_response('contact.html', context_dict, context)
+
+
+def faq(request):
+    """Display FAQs.
+    
+    Arguments:
+    - `request`:
+    """
+    context = RequestContext(request)
+
+    faqs = Faq.objects.all()
+    context_dict = {'faqs': faqs}
+    return render_to_response('faqs.html', context_dict, context)
 
 
 def all_ac(request):
     context = RequestContext(request)
     aakashcenters = AakashCenter.objects.all()
     coordinators = Coordinator.objects.all()
-    
+
     context_dict = {'aakashcenters': aakashcenters,
                     'coordinators': coordinators}
 
@@ -190,13 +234,18 @@ def projects(request):
     return render_to_response('ac/projects.html', context_dict, context)
 
 def iitb(request):
-    """List all projects at iitb"""
+    """List all projects at iitb.
+    IITB has RC_ID=0."""
     context = RequestContext(request)
-    iitb = AakashCenter.objects.get(ac_id=0)
-    coordinator = iitb.coordinator
-    coordinator = Coordinator.objects.filter(id=coordinator.id)
-
-    projects = Project.objects.filter(ac=iitb.id)
+    try:
+        iitb = AakashCenter.objects.get(ac_id=0)
+        coordinator = iitb.coordinator
+        coordinator = Coordinator.objects.filter(id=coordinator.id)
+        projects = Project.objects.filter(ac=iitb.id)
+    except:
+        iitb = None
+        coordinator = None
+        projects = None
     
     context_dict = {'iitb': iitb,
                     'coordinator': coordinator,
